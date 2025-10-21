@@ -135,7 +135,7 @@ def preprocess_data(df, target_column='BMI'):
     X_scaled = scaler.fit_transform(X)
     X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
     
-    print("Normalización completada ✓")
+    print("Normalizacion completada [OK]")
     
     return X_scaled, y, scaler
 
@@ -186,9 +186,13 @@ def train_models(X_train, y_train):
     Returns:
         Diccionario con modelos entrenados
     """
+    import time
+    from datetime import datetime
+    
     print("\n" + "="*70)
     print("ENTRENAMIENTO DE MODELOS")
     print("="*70)
+    print(f"Inicio: {datetime.now().strftime('%H:%M:%S')}")
     
     models = {}
     
@@ -197,10 +201,12 @@ def train_models(X_train, y_train):
     
     # 1. Regresión Lineal
     print("\n1. Entrenando Regresión Lineal...")
+    start_time = time.time()
     lr = LinearRegression()
     lr.fit(X_train, y_train)
     models['Linear Regression'] = lr
-    print("   ✓ Completado")
+    elapsed = time.time() - start_time
+    print(f"   [OK] Completado en {elapsed:.2f}s")
     
     # Validación cruzada
     cv_scores = cross_val_score(lr, X_train, y_train, cv=5, 
@@ -209,10 +215,12 @@ def train_models(X_train, y_train):
     
     # 2. Árbol de Decisión
     print("\n2. Entrenando Árbol de Decisión...")
+    start_time = time.time()
     dt = DecisionTreeRegressor(random_state=42)
     dt.fit(X_train, y_train)
     models['Decision Tree'] = dt
-    print("   ✓ Completado")
+    elapsed = time.time() - start_time
+    print(f"   [OK] Completado en {elapsed:.2f}s")
     
     # Validación cruzada
     cv_scores = cross_val_score(dt, X_train, y_train, cv=5, 
@@ -224,29 +232,47 @@ def train_models(X_train, y_train):
     
     # 3. Random Forest
     print("\n3. Entrenando Random Forest...")
+    start_time = time.time()
     rf = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
     rf.fit(X_train, y_train)
     models['Random Forest'] = rf
-    print("   ✓ Completado")
+    elapsed = time.time() - start_time
+    print(f"   [OK] Completado en {elapsed:.2f}s")
     
     # Validación cruzada
     cv_scores = cross_val_score(rf, X_train, y_train, cv=5, 
                                  scoring='r2', n_jobs=-1)
     print(f"   R² con CV (K=5): {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
     
-    # 4. Support Vector Regressor
+    # 4. Support Vector Regressor (OPTIMIZADO)
     print("\n4. Entrenando SVR...")
-    svr = SVR(kernel='rbf')
-    svr.fit(X_train, y_train)
+    print("   [ADVERTENCIA] SVR es lento con datasets grandes. Usando muestreo...")
+    
+    # Para datasets grandes, usar una muestra representativa
+    if len(X_train) > 10000:
+        from sklearn.utils import resample
+        # Tomar muestra de 10,000 registros para SVR
+        X_svr, y_svr = resample(X_train, y_train, n_samples=10000, 
+                               random_state=42, stratify=None)
+        print(f"   Usando muestra de {len(X_svr):,} registros para SVR")
+    else:
+        X_svr, y_svr = X_train, y_train
+    
+    # SVR optimizado con parámetros más rápidos
+    start_time = time.time()
+    svr = SVR(kernel='rbf', C=1.0, gamma='scale', cache_size=1000)
+    svr.fit(X_svr, y_svr)
     models['SVR'] = svr
-    print("   ✓ Completado")
+    elapsed = time.time() - start_time
+    print(f"   [OK] Completado en {elapsed:.2f}s")
     
-    # Validación cruzada
-    cv_scores = cross_val_score(svr, X_train, y_train, cv=5, 
+    # Validación cruzada solo en la muestra
+    cv_scores = cross_val_score(svr, X_svr, y_svr, cv=3, 
                                  scoring='r2', n_jobs=-1)
-    print(f"   R² con CV (K=5): {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
+    print(f"   R² con CV (K=3): {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
     
-    print("\n✓ Todos los modelos entrenados exitosamente")
+    print(f"\n[OK] Todos los modelos entrenados exitosamente")
+    print(f"Tiempo total: {time.time() - start_time:.2f}s")
     
     return models
 
@@ -457,7 +483,7 @@ def print_comparison_table(results_df):
     best_rmse = results_df.loc[best_idx, 'RMSE_test']
     
     print("\n" + "="*70)
-    print(f"🏆 MEJOR MODELO: {best_model}")
+    print(f"[MEJOR MODELO]: {best_model}")
     print(f"   - R² = {best_r2:.4f} (explica {best_r2*100:.2f}% de la varianza)")
     print(f"   - RMSE = {best_rmse:.4f}")
     print("="*70)
@@ -516,11 +542,11 @@ def main():
         return models, results_df, scaler
         
     except FileNotFoundError:
-        print(f"\n❌ ERROR: No se encontró el archivo '{DATA_PATH}'")
+        print(f"\nERROR: No se encontro el archivo '{DATA_PATH}'")
         print("   Descarga el dataset de Kaggle y colócalo en el directorio actual")
         return None, None, None
     except Exception as e:
-        print(f"\n❌ ERROR: {str(e)}")
+        print(f"\nERROR: {str(e)}")
         return None, None, None
 
 

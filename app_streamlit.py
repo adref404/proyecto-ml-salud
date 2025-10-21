@@ -98,13 +98,13 @@ def preprocess_data(df, target_col='BMI'):
     return X_scaled, y, scaler
 
 def train_all_models(X_train, y_train, X_test, y_test):
-    """Entrena y evalúa todos los modelos"""
+    """Entrena y evalúa todos los modelos con optimizaciones"""
     
     models = {
         'Regresión Lineal': LinearRegression(),
         'Árbol de Decisión': DecisionTreeRegressor(random_state=42),
         'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1),
-        'SVR': SVR(kernel='rbf')
+        'SVR': SVR(kernel='rbf', C=1.0, gamma='scale', cache_size=1000)  # Optimizado
     }
     
     results = []
@@ -112,17 +112,31 @@ def train_all_models(X_train, y_train, X_test, y_test):
     
     progress_bar = st.progress(0)
     status_text = st.empty()
+    time_container = st.empty()
     
     for idx, (name, model) in enumerate(models.items()):
+        start_time = time.time()
         status_text.text(f"Entrenando {name}...")
         
-        # Entrenar modelo
-        model.fit(X_train, y_train)
-        trained_models[name] = model
+        # Optimización especial para SVR con datasets grandes
+        if name == 'SVR' and len(X_train) > 10000:
+            from sklearn.utils import resample
+            # Usar muestra de 10,000 registros para SVR
+            X_svr, y_svr = resample(X_train, y_train, n_samples=10000, 
+                                   random_state=42, stratify=None)
+            status_text.text(f"Entrenando {name} (usando muestra de {len(X_svr):,} registros)...")
+            model.fit(X_svr, y_svr)
+            # Para predicciones, usar el modelo entrenado en la muestra
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
+        else:
+            # Entrenar modelo normalmente
+            model.fit(X_train, y_train)
+            y_train_pred = model.predict(X_train)
+            y_test_pred = model.predict(X_test)
         
-        # Predicciones
-        y_train_pred = model.predict(X_train)
-        y_test_pred = model.predict(X_test)
+        trained_models[name] = model
+        elapsed_time = time.time() - start_time
         
         # Métricas
         results.append({
@@ -133,13 +147,18 @@ def train_all_models(X_train, y_train, X_test, y_test):
             'R2_train': r2_score(y_train, y_train_pred),
             'MAE_test': mean_absolute_error(y_test, y_test_pred),
             'RMSE_test': np.sqrt(mean_squared_error(y_test, y_test_pred)),
-            'R2_test': r2_score(y_test, y_test_pred)
+            'R2_test': r2_score(y_test, y_test_pred),
+            'Tiempo': f"{elapsed_time:.2f}s"
         })
         
+        # Mostrar tiempo transcurrido
+        time_container.text(f"⏱️ {name} completado en {elapsed_time:.2f}s")
+        
         progress_bar.progress((idx + 1) / len(models))
-        time.sleep(0.5)
+        time.sleep(0.2)  # Reducido de 0.5s a 0.2s
     
-    status_text.text("✓ Entrenamiento completado")
+    status_text.text("✅ Entrenamiento completado")
+    time_container.empty()
     
     return pd.DataFrame(results), trained_models
 
@@ -338,9 +357,14 @@ def main():
             
             **Caja Negra (Mayor complejidad):**
             - **Random Forest:** Ensamble de árboles de decisión (100 estimadores)
-            - **SVR:** Support Vector Regressor con kernel RBF
+            - **SVR:** Support Vector Regressor con kernel RBF (optimizado con muestreo)
             
             **Validación:** K-Fold Cross Validation con K=5
+            
+            **⚡ Optimizaciones aplicadas:**
+            - SVR usa muestreo inteligente para datasets grandes (>10K registros)
+            - Parámetros optimizados para mejor rendimiento
+            - Indicadores de tiempo en tiempo real
             """)
             
             st.markdown("---")

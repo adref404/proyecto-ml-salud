@@ -176,6 +176,14 @@ cython_debug/
 *.tflite
 *.mlmodel
 
+# Archivos generados por el proyecto
+outputs/
+results/
+generated/
+plots/
+figures/
+charts/
+
 # Datasets grandes (mantener solo muestras pequeñas)
 # *.csv
 # *.json
