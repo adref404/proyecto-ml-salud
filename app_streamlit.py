@@ -98,13 +98,13 @@ def preprocess_data(df, target_col='BMI'):
     return X_scaled, y, scaler
 
 def train_all_models(X_train, y_train, X_test, y_test):
-    """Entrena y evalúa todos los modelos con optimizaciones"""
+    """Entrena y evalúa todos los modelos"""
     
     models = {
         'Regresión Lineal': LinearRegression(),
         'Árbol de Decisión': DecisionTreeRegressor(random_state=42),
         'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1),
-        'SVR': SVR(kernel='rbf', C=1.0, gamma='scale', cache_size=1000)  # Optimizado
+        'SVR': SVR(kernel='rbf')
     }
     
     results = []
@@ -112,31 +112,17 @@ def train_all_models(X_train, y_train, X_test, y_test):
     
     progress_bar = st.progress(0)
     status_text = st.empty()
-    time_container = st.empty()
     
     for idx, (name, model) in enumerate(models.items()):
-        start_time = time.time()
         status_text.text(f"Entrenando {name}...")
         
-        # Optimización especial para SVR con datasets grandes
-        if name == 'SVR' and len(X_train) > 10000:
-            from sklearn.utils import resample
-            # Usar muestra de 10,000 registros para SVR
-            X_svr, y_svr = resample(X_train, y_train, n_samples=10000, 
-                                   random_state=42, stratify=None)
-            status_text.text(f"Entrenando {name} (usando muestra de {len(X_svr):,} registros)...")
-            model.fit(X_svr, y_svr)
-            # Para predicciones, usar el modelo entrenado en la muestra
-            y_train_pred = model.predict(X_train)
-            y_test_pred = model.predict(X_test)
-        else:
-            # Entrenar modelo normalmente
-            model.fit(X_train, y_train)
-            y_train_pred = model.predict(X_train)
-            y_test_pred = model.predict(X_test)
-        
+        # Entrenar modelo
+        model.fit(X_train, y_train)
         trained_models[name] = model
-        elapsed_time = time.time() - start_time
+        
+        # Predicciones
+        y_train_pred = model.predict(X_train)
+        y_test_pred = model.predict(X_test)
         
         # Métricas
         results.append({
@@ -147,18 +133,13 @@ def train_all_models(X_train, y_train, X_test, y_test):
             'R2_train': r2_score(y_train, y_train_pred),
             'MAE_test': mean_absolute_error(y_test, y_test_pred),
             'RMSE_test': np.sqrt(mean_squared_error(y_test, y_test_pred)),
-            'R2_test': r2_score(y_test, y_test_pred),
-            'Tiempo': f"{elapsed_time:.2f}s"
+            'R2_test': r2_score(y_test, y_test_pred)
         })
         
-        # Mostrar tiempo transcurrido
-        time_container.text(f"⏱️ {name} completado en {elapsed_time:.2f}s")
-        
         progress_bar.progress((idx + 1) / len(models))
-        time.sleep(0.2)  # Reducido de 0.5s a 0.2s
+        time.sleep(0.5)
     
-    status_text.text("✅ Entrenamiento completado")
-    time_container.empty()
+    status_text.text("✓ Entrenamiento completado")
     
     return pd.DataFrame(results), trained_models
 
@@ -337,6 +318,12 @@ def main():
                         st.metric("📚 Datos de Entrenamiento", f"{len(X_train):,}")
                     with col2:
                         st.metric("🧪 Datos de Prueba", f"{len(X_test):,}")
+                    
+                    # Mostrar columnas para debug
+                    with st.expander("🔍 Ver columnas del dataset"):
+                        st.write("**Columnas de features (orden importante):**")
+                        st.code(", ".join(X_train.columns.tolist()))
+                        st.info(f"Total de features: {len(X_train.columns)}")
         else:
             st.warning("⚠️ Primero carga el dataset en la pestaña 'Dataset'")
     
@@ -357,14 +344,9 @@ def main():
             
             **Caja Negra (Mayor complejidad):**
             - **Random Forest:** Ensamble de árboles de decisión (100 estimadores)
-            - **SVR:** Support Vector Regressor con kernel RBF (optimizado con muestreo)
+            - **SVR:** Support Vector Regressor con kernel RBF
             
             **Validación:** K-Fold Cross Validation con K=5
-            
-            **⚡ Optimizaciones aplicadas:**
-            - SVR usa muestreo inteligente para datasets grandes (>10K registros)
-            - Parámetros optimizados para mejor rendimiento
-            - Indicadores de tiempo en tiempo real
             """)
             
             st.markdown("---")
@@ -546,76 +528,104 @@ def main():
                 phys_health = st.slider("Días Salud Física Mala (último mes)", 0, 30, 5)
             
             if st.button("🔮 Realizar Predicción", use_container_width=True, type="primary"):
-                # Crear entrada
-                input_data = pd.DataFrame({
-                    'HighBP': [high_bp],
-                    'HighChol': [high_chol],
-                    'CholCheck': [1],  # Asumido
-                    'Smoker': [smoker],
-                    'Stroke': [stroke],
-                    'Diabetes': [diabetes],
-                    'PhysActivity': [phys_activity],
-                    'Fruits': [fruits],
-                    'Veggies': [veggies],
-                    'HvyAlcoholConsump': [hvy_alcohol],
-                    'AnyHealthcare': [healthcare],
-                    'NoDocbcCost': [0],  # Valor por defecto
-                    'GenHlth': [gen_health],
-                    'MentHlth': [ment_health],
-                    'PhysHlth': [phys_health],
-                    'DiffWalk': [0],  # Valor por defecto
-                    'Sex': [sex],
-                    'Age': [age],
-                    'Education': [education],
-                    'Income': [income],
-                    'HeartDiseaseorAttack': [0]  # Valor por defecto
-                })
+                # Obtener las columnas originales del entrenamiento
+                feature_names = st.session_state.X_train.columns.tolist()
                 
-                # Normalizar
-                input_scaled = st.session_state.scaler.transform(input_data)
+                # Crear entrada con TODAS las columnas necesarias en el ORDEN CORRECTO
+                input_data = pd.DataFrame(columns=feature_names)
                 
-                # Predecir con todos los modelos
-                st.markdown("### 📊 Predicciones por Modelo")
+                # Mapeo de valores ingresados a las columnas del dataset
+                # Ajustar según las columnas reales de tu dataset
+                input_values = {
+                    'HighBP': high_bp,
+                    'HighChol': high_chol,
+                    'CholCheck': 1,  # Asumido
+                    'Smoker': smoker,
+                    'Stroke': stroke,
+                    'Diabetes': diabetes,
+                    'PhysActivity': phys_activity,
+                    'Fruits': fruits,
+                    'Veggies': veggies,
+                    'HvyAlcoholConsump': hvy_alcohol,
+                    'AnyHealthcare': healthcare,
+                    'NoDocbcCost': 0,  # Valor por defecto
+                    'GenHlth': gen_health,
+                    'MentHlth': ment_health,
+                    'PhysHlth': phys_health,
+                    'DiffWalk': 0,  # Valor por defecto
+                    'Sex': sex,
+                    'Age': age,
+                    'Education': education,
+                    'Income': income,
+                }
                 
-                predictions = {}
-                for name, model in st.session_state.models.items():
-                    pred = model.predict(input_scaled)[0]
-                    predictions[name] = pred
+                # Añadir columnas que puedan faltar con valor por defecto
+                for col in feature_names:
+                    if col not in input_values:
+                        input_values[col] = 0
                 
-                # Mostrar predicciones
-                cols = st.columns(4)
-                for idx, (name, pred) in enumerate(predictions.items()):
-                    with cols[idx]:
-                        st.metric(name, f"{pred:.2f}")
+                # Crear DataFrame con valores en el orden correcto
+                input_row = []
+                for col in feature_names:
+                    input_row.append(input_values.get(col, 0))
                 
-                # Predicción del mejor modelo
-                best_model_name = st.session_state.results_df.loc[
-                    st.session_state.results_df['R2_test'].idxmax(), 'Modelo'
-                ]
-                best_prediction = predictions[best_model_name]
+                input_data.loc[0] = input_row
                 
-                st.markdown("---")
-                st.success(f"""
-                ### 🏆 Predicción del Mejor Modelo ({best_model_name})
+                # Asegurar que los tipos de datos sean correctos
+                input_data = input_data.astype(float)
                 
-                **BMI Estimado: {best_prediction:.2f} kg/m²**
-                """)
-                
-                # Interpretación
-                if best_prediction < 18.5:
-                    interpretation = "**Bajo peso** - Se recomienda evaluación nutricional"
-                    color = "blue"
-                elif 18.5 <= best_prediction < 25:
-                    interpretation = "**Peso normal** - Mantener hábitos saludables"
-                    color = "green"
-                elif 25 <= best_prediction < 30:
-                    interpretation = "**Sobrepeso** - Considerar plan de manejo de peso"
-                    color = "orange"
-                else:
-                    interpretation = "**Obesidad** - Se recomienda evaluación médica"
-                    color = "red"
-                
-                st.markdown(f"**Interpretación:** :{color}[{interpretation}]")
+                try:
+                    # Normalizar
+                    input_scaled = st.session_state.scaler.transform(input_data)
+                    
+                    # Predecir con todos los modelos
+                    st.markdown("### 📊 Predicciones por Modelo")
+                    
+                    predictions = {}
+                    for name, model in st.session_state.models.items():
+                        pred = model.predict(input_scaled)[0]
+                        predictions[name] = pred
+                    
+                    # Mostrar predicciones
+                    cols = st.columns(4)
+                    for idx, (name, pred) in enumerate(predictions.items()):
+                        with cols[idx]:
+                            st.metric(name, f"{pred:.2f}")
+                    
+                    # Predicción del mejor modelo
+                    best_model_name = st.session_state.results_df.loc[
+                        st.session_state.results_df['R2_test'].idxmax(), 'Modelo'
+                    ]
+                    best_prediction = predictions[best_model_name]
+                    
+                    st.markdown("---")
+                    st.success(f"""
+                    ### 🏆 Predicción del Mejor Modelo ({best_model_name})
+                    
+                    **BMI Estimado: {best_prediction:.2f} kg/m²**
+                    """)
+                    
+                    # Interpretación
+                    if best_prediction < 18.5:
+                        interpretation = "**Bajo peso** - Se recomienda evaluación nutricional"
+                        color = "blue"
+                    elif 18.5 <= best_prediction < 25:
+                        interpretation = "**Peso normal** - Mantener hábitos saludables"
+                        color = "green"
+                    elif 25 <= best_prediction < 30:
+                        interpretation = "**Sobrepeso** - Considerar plan de manejo de peso"
+                        color = "orange"
+                    else:
+                        interpretation = "**Obesidad** - Se recomienda evaluación médica"
+                        color = "red"
+                    
+                    st.markdown(f"**Interpretación:** :{color}[{interpretation}]")
+                    
+                except Exception as e:
+                    st.error(f"Error al realizar la predicción: {str(e)}")
+                    st.info("Asegúrate de que el dataset cargado contiene todas las columnas necesarias.")
+                    st.code(f"Columnas esperadas: {feature_names}")
+                    st.code(f"Columnas proporcionadas: {list(input_data.columns)}")
                 
         else:
             st.warning("⚠️ Primero entrena los modelos en la pestaña 'Entrenamiento'")
