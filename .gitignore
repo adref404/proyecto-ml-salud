@@ -1,0 +1,319 @@
+# ============================================================================
+# .GITIGNORE PARA PROYECTO DE MACHINE LEARNING
+# Sistema de Machine Learning para Predicción de Salud Cardiovascular
+# ============================================================================
+
+# ============================================================================
+# ENTORNOS VIRTUALES
+# ============================================================================
+# Entorno virtual de Python
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.env/
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# ============================================================================
+# ARCHIVOS DE PYTHON
+# ============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ============================================================================
+# MACHINE LEARNING ESPECÍFICO
+# ============================================================================
+# Modelos entrenados
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.pb
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.mlmodel
+
+# Datasets grandes (mantener solo muestras pequeñas)
+# *.csv
+# *.json
+# *.parquet
+# *.feather
+# *.xlsx
+# *.xls
+
+# Datos temporales
+temp/
+tmp/
+data/temp/
+data/tmp/
+
+# Logs de entrenamiento
+logs/
+tensorboard_logs/
+mlruns/
+.mlflow/
+
+# Checkpoints de modelos
+checkpoints/
+model_checkpoints/
+saved_models/
+
+# ============================================================================
+# STREAMLIT ESPECÍFICO
+# ============================================================================
+# Streamlit cache
+.streamlit/
+
+# ============================================================================
+# ARCHIVOS DEL SISTEMA
+# ============================================================================
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Linux
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================================================
+# IDEs Y EDITORES
+# ============================================================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ============================================================================
+# ARCHIVOS DE CONFIGURACIÓN LOCAL
+# ============================================================================
+# Configuraciones locales
+config_local.py
+settings_local.py
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ============================================================================
+# DOCUMENTACIÓN GENERADA
+# ============================================================================
+# Documentación generada automáticamente
+docs/build/
+docs/_build/
+site/
+
+# ============================================================================
+# ARCHIVOS DE BACKUP
+# ============================================================================
+# Archivos de respaldo
+*.bak
+*.backup
+*.old
+*.orig
+
+# ============================================================================
+# ARCHIVOS TEMPORALES
+# ============================================================================
+# Archivos temporales
+*.tmp
+*.temp
+temp/
+tmp/
+
+# ============================================================================
+# NOTAS ESPECÍFICAS DEL PROYECTO
+# ============================================================================
+# Si tienes datasets muy grandes, considera usar Git LFS
+# o mantener solo muestras pequeñas en el repositorio
+# 
+# Para datasets grandes, puedes usar:
+# *.csv
+# *.json
+# *.parquet
+# 
+# Y subirlos a servicios como:
+# - Google Drive
+# - Dropbox
+# - AWS S3
+# - Azure Blob Storage

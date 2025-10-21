@@ -1,0 +1,61 @@
+# ============================================================================
+# DEPENDENCIAS DEL PROYECTO
+# Sistema de Machine Learning para Predicción de Salud Cardiovascular
+# Estudiante: Celadita
+# ============================================================================
+
+# Procesamiento y análisis de datos
+pandas==2.3.3
+numpy==2.3.4
+
+# Machine Learning
+scikit-learn==1.7.2
+
+# Visualización
+matplotlib==3.10.7
+seaborn==0.13.2
+
+# Interfaz gráfica
+streamlit==1.50.0
+
+# Utilidades
+joblib==1.5.2           # Para guardar modelos
+openpyxl==3.1.5         # Para leer archivos Excel (opcional)
+
+# Opcional: Para mejor rendimiento
+# threadpoolctl==3.2.0  # Control de threads en scikit-learn
+
+# ============================================================================
+# INSTALACIÓN
+# ============================================================================
+# 
+# Para instalar todas las dependencias:
+#   pip install -r requirements.txt
+#
+# Para instalar con versiones exactas (reproducibilidad):
+#   pip install -r requirements.txt --no-cache-dir
+#
+# Para actualizar dependencias:
+#   pip install --upgrade -r requirements.txt
+#
+# ============================================================================
+# VERIFICACIÓN DE INSTALACIÓN
+# ============================================================================
+#
+# Ejecutar en Python para verificar:
+#
+# import pandas as pd
+# import numpy as np
+# import sklearn
+# import matplotlib
+# import seaborn as sns
+# import streamlit as st
+#
+# print("Pandas:", pd.__version__)      # Debería mostrar: 2.3.3
+# print("NumPy:", np.__version__)        # Debería mostrar: 2.3.4
+# print("Scikit-learn:", sklearn.__version__)  # Debería mostrar: 1.7.2
+# print("Matplotlib:", matplotlib.__version__)  # Debería mostrar: 3.10.7
+# print("Seaborn:", sns.__version__)     # Debería mostrar: 0.13.2
+# print("Streamlit:", st.__version__)    # Debería mostrar: 1.50.0
+#
+# ============================================================================
